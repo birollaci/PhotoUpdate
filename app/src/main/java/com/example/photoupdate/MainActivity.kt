@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
@@ -13,11 +12,10 @@ import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-
 import kotlinx.android.synthetic.main.activity_main.*
+import org.apache.commons.net.ftp.FTPClient
 
 class MainActivity() : AppCompatActivity() {
     var sdkVersion = Build.VERSION.SDK_INT
@@ -40,6 +38,31 @@ class MainActivity() : AppCompatActivity() {
                 Toast.makeText(this, "Unable to open camera", Toast.LENGTH_SHORT).show()
             }
 
+        }
+
+        btnSendFtp.setOnClickListener {
+            ftpThread.start()
+        }
+    }
+
+    var ftpThread = Thread {
+        try {
+            try {
+                val ftp = FTPClient();
+                ftp.connect("ftp.mikola.ro");
+                ftp.login("tester@mikola.ro", "Tester_2023!");
+//                ftp.type(FTPClient.BINARY_FILE_TYPE)
+//                mFtpClient.type = FTPClient.TYPE_BINARY
+//                mFtpClient.changeDirectory("/directory_path/")
+//
+//                mFtpClient.upload(File("file_path"))
+                ftp.disconnect()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
         }
     }
 
