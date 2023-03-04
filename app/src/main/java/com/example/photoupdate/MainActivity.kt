@@ -1,12 +1,16 @@
 package com.example.photoupdate
 
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.TextView
@@ -19,10 +23,24 @@ class MainActivity() : AppCompatActivity() {
     var sdkVersion = Build.VERSION.SDK_INT
     var model = Build.MODEL
     private val updateConversationHandler: Handler? = null
+
+    private val REQUEST_CODE = 42
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        textView.setText("barcode")
+        textView.setText("Barcode is not scanned yet")
+
+        btnPhoto.setOnClickListener {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+            if(takePictureIntent.resolveActivity(this.packageManager) != null) {
+                startActivityForResult(takePictureIntent, REQUEST_CODE)
+            } else {
+                Toast.makeText(this, "Unable to open camera", Toast.LENGTH_SHORT).show()
+            }
+
+        }
     }
 
     override fun onResume() {
@@ -33,6 +51,16 @@ class MainActivity() : AppCompatActivity() {
 
         //Will setup the new configuration of the scanner.
         claimScanner()
+    }
+
+    // CAMERA PHOTO
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val takenImage = data?.extras?.get("data") as Bitmap
+            imageView.setImageBitmap(takenImage)
+        }
+
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     private val barcodeDataReceiver: BroadcastReceiver = object : BroadcastReceiver() {
