@@ -22,7 +22,7 @@ class MainActivity() : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        textView.setText("sdk version: $sdkVersion")
+        textView.setText("barcode")
     }
 
     override fun onResume() {
@@ -60,14 +60,7 @@ class MainActivity() : AppCompatActivity() {
                     val dataBytes = intent.getByteArrayExtra("dataBytes")
                     val dataBytesStr = bytesToHexString(dataBytes)
                     val timestamp = intent.getStringExtra("timestamp")
-                    val text = String.format(
-                        "Data:%s\n" +
-                                "Charset:%s\n" +
-                                "Bytes:%s\n" +
-                                "AimId:%s\n" +
-                                "CodeId:%s\n" +
-                                "Timestamp:%s\n",
-                        data, charset, dataBytesStr, aimId, codeId, timestamp)
+                    val text = "Barcode: $data"
                     Log.e(TAG, "Received the scanned barcode")
                     setText(text)
                 }
