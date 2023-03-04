@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
@@ -16,6 +17,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import org.apache.commons.net.ftp.FTPClient
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity() : AppCompatActivity() {
     var sdkVersion = Build.VERSION.SDK_INT
@@ -23,6 +30,8 @@ class MainActivity() : AppCompatActivity() {
     private val updateConversationHandler: Handler? = null
 
     private val REQUEST_CODE = 42
+
+    var savedFile = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,30 +49,104 @@ class MainActivity() : AppCompatActivity() {
 
         }
 
-        btnSendFtp.setOnClickListener {
-            ftpThread.start()
-        }
-    }
+//        btnSendFtp.setOnClickListener {
+//            ftpThread.start()
+//        }
 
-    var ftpThread = Thread {
-        try {
-            try {
-                val ftp = FTPClient();
-                ftp.connect("ftp.mikola.ro");
-                ftp.login("tester@mikola.ro", "Tester_2023!");
-//                ftp.type(FTPClient.BINARY_FILE_TYPE)
+        btnSendFtp.setOnClickListener(View.OnClickListener {
+            Thread(Runnable {
+                try {
+                    try {
+                        val ftp = FTPClient()
+                        ftp.connect("ftp.mikola.ro")
+                        if(ftp.login("tester@mikola.ro", "Tester_2023!")){
+                            ftp.type(FTPClient.BINARY_FILE_TYPE)
+
+                            // Elso mappa
+                            ftp.changeToParentDirectory()
+                            val simpleDateFormat = SimpleDateFormat("yyyyMMdd")
+                            val date = simpleDateFormat.format(Date())
+                            // ezzel megnezzuk, hogy letezik-e a mappa
+                            ftp.changeWorkingDirectory(date);
+                            var returnCode = ftp.replyCode;
+                            // Ha letezik
+                            if (returnCode == 550) {
+                                ftp.changeToParentDirectory()
+                                ftp.makeDirectory(date)
+                                ftp.changeWorkingDirectory(date)
+                            } // kulonben semmi
+
+                            // Masodik mappa
+                            ftp.changeWorkingDirectory(DataManager.barcode);
+                            returnCode = ftp.replyCode;
+                            if (returnCode == 550) {
+                                ftp.changeWorkingDirectory(date);
+                                ftp.makeDirectory(DataManager.barcode)
+                            }
+
+                            // Kep feltoltese
+                            val simpleDateFormat2 = SimpleDateFormat("yyyyMMddhhmmss")
+                            val date2 = simpleDateFormat2.format(Date())
+
+                        }
+
 //                mFtpClient.type = FTPClient.TYPE_BINARY
 //                mFtpClient.changeDirectory("/directory_path/")
 //
 //                mFtpClient.upload(File("file_path"))
-                ftp.disconnect()
+                        ftp.disconnect()
 
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } catch (e: java.lang.Exception) {
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                } catch (e: java.lang.Exception) {
+                    e.printStackTrace()
+                }
+            }).start()
+        })
+    }
+
+    // CAMERA PHOTO
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val takenImage = data?.extras?.get("data") as Bitmap
+            imageView.setImageBitmap(takenImage)
+            saveImage(takenImage)
+        }
+
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private fun saveImage(bitmap: Bitmap) {
+        val file = getDisc()
+
+        if (!file.exists() && !file.mkdirs()) {
+            file.mkdir()
+        }
+
+        val simpleDateFormat = SimpleDateFormat("yyyymmsshhmmss")
+        val date = simpleDateFormat.format(Date())
+        val name = "IMG" + date + ".jpg"
+        val fileName = file.absolutePath + "/" + name
+        val newFile = File(fileName)
+
+        try {
+            val fileOutPutStream = FileOutputStream(newFile)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutPutStream)
+            fileOutPutStream.flush()
+            fileOutPutStream.close()
+
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
             e.printStackTrace()
         }
+
+    }
+
+    private fun getDisc(): File {
+        val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        return File(file, "YOUR_ALBUM_NAME")
     }
 
     override fun onResume() {
@@ -74,16 +157,6 @@ class MainActivity() : AppCompatActivity() {
 
         //Will setup the new configuration of the scanner.
         claimScanner()
-    }
-
-    // CAMERA PHOTO
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val takenImage = data?.extras?.get("data") as Bitmap
-            imageView.setImageBitmap(takenImage)
-        }
-
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     private val barcodeDataReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -112,6 +185,7 @@ class MainActivity() : AppCompatActivity() {
                     val dataBytesStr = bytesToHexString(dataBytes)
                     val timestamp = intent.getStringExtra("timestamp")
                     val text = "Barcode: $data"
+                    DataManager.barcode = data
                     Log.e(TAG, "Received the scanned barcode")
                     setText(text)
                 }
