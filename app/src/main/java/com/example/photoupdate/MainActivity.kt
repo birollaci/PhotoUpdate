@@ -95,6 +95,15 @@ class MainActivity() : AppCompatActivity() {
             }
 
         }
+
+        btnManualBarcode.setOnClickListener {
+            if(manualBarcodeEditText.text.toString().isEmpty()){
+                alertMsg("Please complete the manual barcode field!")
+            } else {
+                barcode = manualBarcodeEditText.text.toString()
+                textView.setText("Barcode: $barcode")
+            }
+        }
     }
 
     // SEND to FTP server
