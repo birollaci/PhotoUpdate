@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="16dp"
+    android:layout_margin="8dp"
     android:orientation="vertical"
     android:screenOrientation="portrait"
     tools:context=".MainActivity">
@@ -12,26 +12,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_margin="16dp"
+        android:layout_margin="8dp"
         android:text="Settings"
-        android:textSize="16pt" />
+        android:textSize="10pt" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="8dp"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingTop="8dp">
+        android:paddingBottom="4dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="4dp">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:paddingTop="2dp">
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
             <TextView
                 android:layout_width="120dp"
                 android:layout_height="wrap_content"
@@ -40,15 +38,16 @@
             <EditText
                 android:id="@+id/maxWidthEditText"
                 android:layout_width="200dp"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+            
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp">
             <TextView
                 android:layout_width="120dp"
@@ -58,15 +57,16 @@
             <EditText
                 android:id="@+id/maxHeightEditText"
                 android:layout_width="200dp"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+            
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp">
             <TextView
                 android:layout_width="120dp"
@@ -82,9 +82,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+            
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp">
             <TextView
                 android:layout_width="120dp"
@@ -100,9 +100,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+            
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp">
             <TextView
                 android:layout_width="120dp"
@@ -112,15 +112,16 @@
             <EditText
                 android:id="@+id/ftpPasswordEditText"
                 android:layout_width="200dp"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"/>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="2dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+            
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp">
             <TextView
                 android:layout_width="120dp"
@@ -130,7 +131,8 @@
             <EditText
                 android:id="@+id/passwordEditText"
                 android:layout_width="200dp"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -139,8 +141,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="8dp"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:paddingTop="8dp">
         <Button
             android:id="@+id/btnSave"

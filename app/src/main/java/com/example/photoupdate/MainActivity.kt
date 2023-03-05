@@ -19,6 +19,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.photoupdate.DataManager.photo
 import com.example.photoupdate.DataManager.barcode
+import com.example.photoupdate.DataManager.ftpHost
+import com.example.photoupdate.DataManager.ftpPassword
+import com.example.photoupdate.DataManager.ftpUser
+import com.example.photoupdate.DataManager.maxHeight
+import com.example.photoupdate.DataManager.maxWidth
 import kotlinx.android.synthetic.main.activity_main.*
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
@@ -28,18 +33,20 @@ import java.util.*
 
 
 class MainActivity() : AppCompatActivity() {
-    var sdkVersion = Build.VERSION.SDK_INT
-    var model = Build.MODEL
-    private val updateConversationHandler: Handler? = null
 
     private val REQUEST_CODE = 42
 
-    var savedFile = null
+    private var imgWidth: Int = 0
+    private var imgHeight: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        textView.setText("Barcode is not scanned yet")
+        textView.setText("Barcode: $barcode")
+
+        if(photo != null) {
+            imageView.setImageBitmap(photo)
+        }
 
         btnPhoto.setOnClickListener {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -53,18 +60,51 @@ class MainActivity() : AppCompatActivity() {
         }
 
         btnSendFtp.setOnClickListener {
-            sendFTP()
+            if(barcode == "Barcode is not scanned yet") {
+                alertMsg("Please scan a barcode or QR code!")
+            } else if(photo == null) {
+                alertMsg("Please make a photo!")
+            } else {
+                if(widthEditText.text.toString().isEmpty() || heightEditText.text.toString().isEmpty()) {
+                    alertMsg("Please fill width and height of image!")
+                } else {
+                    imgWidth = widthEditText.text.toString().toInt()
+                    imgHeight = heightEditText.text.toString().toInt()
+
+                    if (imgWidth == 0 || imgHeight == 0) {
+                        alertMsg("Width and height be greater than 0 !")
+                    } else {
+                        if(imgWidth > maxWidth!! || imgHeight > maxHeight!!) {
+                            alertMsg("Width or height is exceeding max values! maxWidth=$maxWidth, maxHeight=$maxHeight")
+                        } else {
+                            sendFTP()
+                        }
+                    }
+                }
+            }
+        }
+
+        var eighth = 8
+
+        logoImageView.setOnClickListener {
+            if(eighth == 1) {
+                eighth = 8
+                startActivity(Intent(this, SettingsActivity::class.java))
+            }else{
+                eighth--
+            }
+
         }
     }
 
     // SEND to FTP server
-    fun sendFTP() {
+    private fun sendFTP() {
         Thread(Runnable {
             try {
                 try {
                     val ftp = FTPClient()
-                    ftp.connect("ftp.mikola.ro")
-                    if(ftp.login("tester@mikola.ro", "Tester_2023!")){
+                    ftp.connect(ftpHost)
+                    if(ftp.login(ftpUser, ftpPassword)){
                         ftp.type(FTPClient.BINARY_FILE_TYPE)
 
                         // Elso mappa
@@ -93,23 +133,18 @@ class MainActivity() : AppCompatActivity() {
                         // Kep feltoltese
                         val simpleDateFormat2 = SimpleDateFormat("yyyyMMddhhmmss")
                         val imgName = simpleDateFormat2.format(Date())
+                        ftp.changeWorkingDirectory(secondDir)
+                        ftp.enterLocalPassiveMode()
+                        ftp.setFileType(FTP.BINARY_FILE_TYPE)
 
-                        if(photo != null) {
-                            ftp.changeWorkingDirectory(secondDir)
-                            ftp.enterLocalPassiveMode()
-                            ftp.setFileType(FTP.BINARY_FILE_TYPE)
+                        val resizedPhoto = getResizedBitmap(photo!!, imgWidth, imgHeight)
 
-                            val resizedPhoto = getResizedBitmap(photo!!, 200, 300)
+                        val bos = ByteArrayOutputStream()
+                        resizedPhoto!!.compress(CompressFormat.PNG, 0, bos)
+                        val bs : InputStream = ByteArrayInputStream(bos.toByteArray())
 
-                            val bos = ByteArrayOutputStream()
-                            resizedPhoto!!.compress(Bitmap.CompressFormat.PNG, 0, bos)
-                            val bs : InputStream = ByteArrayInputStream(bos.toByteArray())
+                        ftp.storeFile("$imgName.jpg", bs)
 
-                            val sent = ftp.storeFile("$imgName.jpg", bs)
-                            if(sent){
-                                Toast.makeText(this, "$mainDir/$secondDir/$imgName.jpg photo saved!", Toast.LENGTH_LONG).show()
-                            }
-                        }
                         ftp.logout()
                     }
                     ftp.disconnect()
@@ -122,12 +157,16 @@ class MainActivity() : AppCompatActivity() {
         }).start()
     }
 
+    private fun alertMsg(msg: String) {
+        Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+    }
+
     // CAMERA PHOTO
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val takenImage = data?.extras?.get("data") as Bitmap
-            imageView.setImageBitmap(takenImage)
             photo = takenImage
+            imageView.setImageBitmap(photo)
         }
 
         super.onActivityResult(requestCode, resultCode, data)
@@ -217,8 +256,8 @@ class MainActivity() : AppCompatActivity() {
                     val dataBytes = intent.getByteArrayExtra("dataBytes")
                     val dataBytesStr = bytesToHexString(dataBytes)
                     val timestamp = intent.getStringExtra("timestamp")
-                    val text = "Barcode: $data"
                     barcode = data
+                    val text = "Barcode: $barcode"
                     Log.e(TAG, "Received the scanned barcode")
                     setText(text)
                 }
