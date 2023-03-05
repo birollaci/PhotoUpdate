@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.Matrix
@@ -17,6 +19,8 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.photoupdate.DataManager.photo
 import com.example.photoupdate.DataManager.barcode
 import com.example.photoupdate.DataManager.ftpHost
@@ -42,10 +46,23 @@ class MainActivity() : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+
+        if(intent.getStringExtra("barCode").toString().isNotEmpty()){
+            barcode = intent.getStringExtra("barCode").toString()
+        }
         textView.setText("Barcode: $barcode")
 
         if(photo != null) {
             imageView.setImageBitmap(photo)
+        }
+
+        if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this@MainActivity,
+                arrayOf(android.Manifest.permission.CAMERA),
+                1001
+            )
         }
 
         btnPhoto.setOnClickListener {
@@ -103,6 +120,10 @@ class MainActivity() : AppCompatActivity() {
                 barcode = manualBarcodeEditText.text.toString()
                 textView.setText("Barcode: $barcode")
             }
+        }
+
+        btnCameraScan.setOnClickListener {
+            startActivity(Intent(this, ScanActivity::class.java))
         }
     }
 
