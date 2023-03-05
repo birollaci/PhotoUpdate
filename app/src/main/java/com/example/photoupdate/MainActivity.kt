@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat
+import android.graphics.Matrix
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -15,14 +17,15 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.photoupdate.DataManager.photo
+import com.example.photoupdate.DataManager.barcode
 import kotlinx.android.synthetic.main.activity_main.*
+import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class MainActivity() : AppCompatActivity() {
     var sdkVersion = Build.VERSION.SDK_INT
@@ -49,61 +52,74 @@ class MainActivity() : AppCompatActivity() {
 
         }
 
-//        btnSendFtp.setOnClickListener {
-//            ftpThread.start()
-//        }
+        btnSendFtp.setOnClickListener {
+            sendFTP()
+        }
+    }
 
-        btnSendFtp.setOnClickListener(View.OnClickListener {
-            Thread(Runnable {
+    // SEND to FTP server
+    fun sendFTP() {
+        Thread(Runnable {
+            try {
                 try {
-                    try {
-                        val ftp = FTPClient()
-                        ftp.connect("ftp.mikola.ro")
-                        if(ftp.login("tester@mikola.ro", "Tester_2023!")){
-                            ftp.type(FTPClient.BINARY_FILE_TYPE)
+                    val ftp = FTPClient()
+                    ftp.connect("ftp.mikola.ro")
+                    if(ftp.login("tester@mikola.ro", "Tester_2023!")){
+                        ftp.type(FTPClient.BINARY_FILE_TYPE)
 
-                            // Elso mappa
+                        // Elso mappa
+                        ftp.changeToParentDirectory()
+                        val simpleDateFormat = SimpleDateFormat("yyyyMMdd")
+                        val mainDir = simpleDateFormat.format(Date())
+                        // ezzel megnezzuk, hogy letezik-e a mappa
+                        ftp.changeWorkingDirectory(mainDir);
+                        var returnCode = ftp.replyCode;
+                        // Ha letezik
+                        if (returnCode == 550) {
                             ftp.changeToParentDirectory()
-                            val simpleDateFormat = SimpleDateFormat("yyyyMMdd")
-                            val date = simpleDateFormat.format(Date())
-                            // ezzel megnezzuk, hogy letezik-e a mappa
-                            ftp.changeWorkingDirectory(date);
-                            var returnCode = ftp.replyCode;
-                            // Ha letezik
-                            if (returnCode == 550) {
-                                ftp.changeToParentDirectory()
-                                ftp.makeDirectory(date)
-                                ftp.changeWorkingDirectory(date)
-                            } // kulonben semmi
+                            ftp.makeDirectory(mainDir)
+                            ftp.changeWorkingDirectory(mainDir)
+                        } // kulonben semmi
 
-                            // Masodik mappa
-                            ftp.changeWorkingDirectory(DataManager.barcode);
-                            returnCode = ftp.replyCode;
-                            if (returnCode == 550) {
-                                ftp.changeWorkingDirectory(date);
-                                ftp.makeDirectory(DataManager.barcode)
-                            }
-
-                            // Kep feltoltese
-                            val simpleDateFormat2 = SimpleDateFormat("yyyyMMddhhmmss")
-                            val date2 = simpleDateFormat2.format(Date())
-
+                        // Masodik mappa
+                        val secondDir = barcode
+                        ftp.changeWorkingDirectory(secondDir);
+                        returnCode = ftp.replyCode;
+                        if (returnCode == 550) {
+                            ftp.changeWorkingDirectory(mainDir);
+                            ftp.makeDirectory(secondDir)
                         }
 
-//                mFtpClient.type = FTPClient.TYPE_BINARY
-//                mFtpClient.changeDirectory("/directory_path/")
-//
-//                mFtpClient.upload(File("file_path"))
-                        ftp.disconnect()
+                        // Kep feltoltese
+                        val simpleDateFormat2 = SimpleDateFormat("yyyyMMddhhmmss")
+                        val imgName = simpleDateFormat2.format(Date())
 
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                        if(photo != null) {
+                            ftp.changeWorkingDirectory(secondDir)
+                            ftp.enterLocalPassiveMode()
+                            ftp.setFileType(FTP.BINARY_FILE_TYPE)
+
+                            val resizedPhoto = getResizedBitmap(photo!!, 200, 300)
+
+                            val bos = ByteArrayOutputStream()
+                            resizedPhoto!!.compress(Bitmap.CompressFormat.PNG, 0, bos)
+                            val bs : InputStream = ByteArrayInputStream(bos.toByteArray())
+
+                            val sent = ftp.storeFile("$imgName.jpg", bs)
+                            if(sent){
+                                Toast.makeText(this, "$mainDir/$secondDir/$imgName.jpg photo saved!", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        ftp.logout()
                     }
-                } catch (e: java.lang.Exception) {
+                    ftp.disconnect()
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
-            }).start()
-        })
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        }).start()
     }
 
     // CAMERA PHOTO
@@ -111,10 +127,27 @@ class MainActivity() : AppCompatActivity() {
         if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val takenImage = data?.extras?.get("data") as Bitmap
             imageView.setImageBitmap(takenImage)
-            saveImage(takenImage)
+            photo = takenImage
         }
 
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    fun getResizedBitmap(bm: Bitmap, newWidth: Int, newHeight: Int): Bitmap? {
+        val width = bm.width
+        val height = bm.height
+        val scaleWidth = newWidth.toFloat() / width
+        val scaleHeight = newHeight.toFloat() / height
+        // CREATE A MATRIX FOR THE MANIPULATION
+        val matrix = Matrix()
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight)
+
+        // "RECREATE" THE NEW BITMAP
+        val resizedBitmap = Bitmap.createBitmap(
+            bm, 0, 0, width, height, matrix, false)
+        bm.recycle()
+        return resizedBitmap
     }
 
     private fun saveImage(bitmap: Bitmap) {
@@ -126,13 +159,13 @@ class MainActivity() : AppCompatActivity() {
 
         val simpleDateFormat = SimpleDateFormat("yyyymmsshhmmss")
         val date = simpleDateFormat.format(Date())
-        val name = "IMG" + date + ".jpg"
+        val name = "sajatkep.jpg"
         val fileName = file.absolutePath + "/" + name
         val newFile = File(fileName)
 
         try {
             val fileOutPutStream = FileOutputStream(newFile)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutPutStream)
+            bitmap.compress(CompressFormat.JPEG, 100, fileOutPutStream)
             fileOutPutStream.flush()
             fileOutPutStream.close()
 
@@ -146,7 +179,7 @@ class MainActivity() : AppCompatActivity() {
 
     private fun getDisc(): File {
         val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        return File(file, "YOUR_ALBUM_NAME")
+        return File(file, "PhotoUpdate")
     }
 
     override fun onResume() {
@@ -185,7 +218,7 @@ class MainActivity() : AppCompatActivity() {
                     val dataBytesStr = bytesToHexString(dataBytes)
                     val timestamp = intent.getStringExtra("timestamp")
                     val text = "Barcode: $data"
-                    DataManager.barcode = data
+                    barcode = data
                     Log.e(TAG, "Received the scanned barcode")
                     setText(text)
                 }
