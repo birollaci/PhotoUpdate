@@ -1,6 +1,7 @@
 package com.example.photoupdate
 
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.photoupdate.DataManager.ftpHost
@@ -9,6 +10,8 @@ import com.example.photoupdate.DataManager.ftpUser
 import com.example.photoupdate.DataManager.maxHeight
 import com.example.photoupdate.DataManager.maxWidth
 import kotlinx.android.synthetic.main.activity_settings.*
+import java.text.DecimalFormat
+import java.text.NumberFormat
 
 class SettingsActivity() : AppCompatActivity() {
 
@@ -16,7 +19,14 @@ class SettingsActivity() : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        btnSave.setOnClickListener {
+        val formatter: NumberFormat = DecimalFormat("#0")
+        maxWidthEditText.setText(formatter.format(maxWidth), TextView.BufferType.EDITABLE)
+        maxHeightEditText.setText(formatter.format(maxHeight), TextView.BufferType.EDITABLE)
+        ftpHostEditText.setText(ftpHost, TextView.BufferType.EDITABLE)
+        ftpUserEditText.setText(ftpUser, TextView.BufferType.EDITABLE)
+        ftpPasswordEditText.setText(ftpPassword, TextView.BufferType.EDITABLE)
+
+        btnUpdate.setOnClickListener {
             val password = passwordEditText.text.toString()
             if(password == "Auto.ID") {
                 if(maxWidthEditText.text.toString().isEmpty()
@@ -31,6 +41,8 @@ class SettingsActivity() : AppCompatActivity() {
                     ftpHost = ftpHostEditText.text.toString()
                     ftpUser = ftpUserEditText.text.toString()
                     ftpPassword = ftpPasswordEditText.text.toString()
+                    alertMsg("Update finished!")
+                    passwordEditText.setText("", TextView.BufferType.EDITABLE)
                 }
             } else {
                 alertMsg("Wrong password")

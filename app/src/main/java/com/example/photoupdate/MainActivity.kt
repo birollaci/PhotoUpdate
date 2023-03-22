@@ -48,7 +48,7 @@ class MainActivity() : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
-        if(intent.getStringExtra("barCode").toString().isNotEmpty()){
+        if(intent.getStringExtra("barCode").toString().isNotEmpty() && intent.getStringExtra("barCode") != null){
             barcode = intent.getStringExtra("barCode").toString()
         }
         textView.setText("Barcode: $barcode")

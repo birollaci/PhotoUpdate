@@ -145,11 +145,11 @@
         android:paddingRight="8dp"
         android:paddingTop="8dp">
         <Button
-            android:id="@+id/btnSave"
+            android:id="@+id/btnUpdate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Save" />
+            android:text="Update" />
     </LinearLayout>
 
 </LinearLayout>
